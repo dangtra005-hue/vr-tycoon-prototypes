@@ -1,45 +1,42 @@
-# Advanced VR Tycoon Prototype
+# Urban Empire Tycoon — Full Project
 
-This repository contains an advanced browser-based WebXR tycoon prototype and a Unity-ready VR simulation foundation.
+This repository now contains a production-oriented prototype architecture:
 
-## Included systems
+- `server/` — authoritative economy API with persistent save files
+- `webxr-tycoon/` — browser/WebXR client and dashboard
+- `unity-vr-tycoon/` — Unity/OpenXR integration scripts
+- `docs/` — architecture and simulation documentation
 
-- realistic business simulation engine
-- daily operational cycle with revenue, taxes, wages, inventory, and upkeep
-- brand reputation and morale management
-- market trend and random event modelling
-- upgrade paths, hiring, pricing, marketing, and loan decisions
-- performance dashboard with trend charts
-- WebXR activation button for compatible headsets and browsers
-- branch expansion and competitor pricing pressure
+## Run the full project
 
-## WebXR prototype
-
-Open the `webxr-tycoon` folder and serve it locally:
+Requirements: Node.js 20+
 
 ```bash
-cd webxr-tycoon
-python3 -m http.server 8000
+npm install
+npm run dev
 ```
 
-Then open `http://localhost:8000`.
+Open `http://localhost:8080`. The server hosts the WebXR client and exposes the API at `/api`.
 
-## Unity VR starter
+## API
 
-The `unity-vr-tycoon` folder contains a foundation for a more immersive VR version with:
+- `GET /api/health`
+- `GET /api/games/:gameId`
+- `POST /api/games`
+- `POST /api/games/:gameId/actions`
+- `POST /api/games/:gameId/save`
+- `POST /api/games/:gameId/load`
 
-- business state management
-- dashboard UI update logic
-- customer movement scripts
-- expansion-ready architecture for advanced interaction, inventory, and HR systems
+The server is authoritative: clients request actions, the economy engine validates them, and the resulting state is persisted to `server/data/`.
 
-## Recommended next upgrades
+## Product scope
 
-- 3D product shelf and customer queue system
-- actual hand interaction and object grab in XR
-- staff management hierarchy and departments
-- supplier contracts and financing models
-- city-level expansion and competitor AI
+The project is a serious simulation foundation, not financial advice or a replacement for accounting software. Production deployment should add authentication, a real database, audit logging, rate limits, telemetry, and automated tests.
+
+## Unity setup
+
+Open the Unity folder in a Unity project, install XR Interaction Toolkit and OpenXR, then use the scripts under `Assets/Scripts/`. The `XRBusinessInteraction` component turns world-space controls into validated actions against a transport adapter.
 
 ## License
+
 MIT
