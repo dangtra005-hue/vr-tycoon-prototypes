@@ -1,50 +1,44 @@
-# VR Tycoon Prototypes
+# Advanced VR Tycoon Prototype
 
-This repository contains two related tycoon prototype projects:
+This repository contains an advanced browser-based WebXR tycoon prototype and a Unity-ready VR simulation foundation.
 
-- `webxr-tycoon/` – a browser-based 3D tycoon game that works with WebXR-capable browsers.
-- `unity-vr-tycoon/` – Unity XR project starter scripts and architecture for a more realistic VR business tycoon experience.
+## Included systems
 
-## Projects
+- Realistic business simulation engine
+- Daily operational cycle with revenue, taxes, wages, inventory, and upkeep
+- Brand reputation and morale management
+- Market trend and random event modelling
+- Upgrade paths, hiring, pricing, marketing, and loan decisions
+- Performance dashboard with trend charts
+- WebXR activation button for compatible headsets and browsers
 
-### WebXR tycoon game
-A desktop and VR-ready browser prototype where the player manages a small business empire:
-- Hire staff
-- Buy upgrades
-- Adjust pricing
-- Track cash flow and reputation
-- Expand operations
+## WebXR prototype
 
-### Unity VR tycoon prototype
-A Unity-ready foundation for a VR business simulator using XR interaction.
+Open the `webxr-tycoon` folder and serve it locally:
 
-## Quick start
+```bash
+cd webxr-tycoon
+python3 -m http.server 8000
+```
 
-### WebXR demo
-1. Open a terminal in `webxr-tycoon/`
-2. Run a local static server:
-   ```bash
-   python3 -m http.server 8000
-   ```
-3. Open `http://localhost:8000`
-4. Click "Enter VR" in supported browsers
+Then open `http://localhost:8000`.
 
-### Unity VR prototype
-1. Open Unity Hub
-2. Create a new 3D URP project or open this folder as a starter project
-3. Install XR Plugin Management and OpenXR
-4. Import the scripts from `unity-vr-tycoon/Assets/Scripts/`
-5. Use the included blueprint in the `README.md` in that folder
+## Unity VR starter
 
-## Business model
+The `unity-vr-tycoon` folder contains a foundation for a more immersive VR version with:
 
-The simulation uses a simplified but realistic business loop:
+- business state management
+- dashboard UI update logic
+- customer movement scripts
+- expansion-ready architecture for advanced interaction, inventory, and HR systems
 
-- Customer demand depends on reputation, price, and quality
-- Staff productivity affects output and service
-- Revenue is generated from product sales
-- Costs include hiring, utilities, upgrades, and maintenance
-- Profit drives growth and expansion
+## Recommended next upgrades
+
+- 3D product shelf and customer queue system
+- actual hand interaction and object grab in XR
+- staff management hierarchy and departments
+- supplier contracts and financing models
+- city-level expansion and competitor AI
 
 ## License
 MIT
