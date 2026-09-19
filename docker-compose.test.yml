@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: urban_empire_test
+      POSTGRES_USER: urban_empire
+      POSTGRES_PASSWORD: urban_empire_dev_only
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U urban_empire -d urban_empire_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
