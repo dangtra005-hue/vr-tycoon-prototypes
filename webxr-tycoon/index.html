@@ -1,277 +1,507 @@
-const state = {
-  money: 7500,
-  reputation: 55,
-  staff: 1,
-  price: 25,
-  quality: 65,
-  inventory: 18,
-  upgradeLevel: 1,
-  customers: 20,
-  day: 1,
-  demand: 0.6,
-  sales: 0,
-  expenses: 0,
-  revenue: 0,
-  totalProfit: 0,
-  marketTrend: 0.2,
-};
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Urban Empire VR Tycoon</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="scene-root" aria-label="Business world scene">
+        <div class="skyline">
+          <div class="building b1"></div>
+          <div class="building b2"></div>
+          <div class="building b3"></div>
+          <div class="building b4"></div>
+        </div>
 
-const ui = {
-  money: document.getElementById('money'),
-  reputation: document.getElementById('reputation'),
-  staff: document.getElementById('staff'),
-  price: document.getElementById('price'),
-  quality: document.getElementById('quality'),
-  inventory: document.getElementById('inventory'),
-  demand: document.getElementById('demand'),
-  sales: document.getElementById('sales'),
-  expenses: document.getElementById('expenses'),
-  revenue: document.getElementById('revenue'),
-  day: document.getElementById('day'),
-  profit: document.getElementById('profit'),
-  status: document.getElementById('status'),
-  vrButton: document.getElementById('vr-button')
-};
+        <div class="storefront">
+          <div class="roof"></div>
+          <div class="sign">URBAN EMPIRE</div>
+          <div class="windows">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="counter"></div>
+          <div class="door"></div>
+        </div>
 
-const world = {
-  store: null,
-  desk: null,
-  screen: null,
-  customers: [],
-};
+        <div class="customer-zone" id="customers"></div>
+      </div>
 
-const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+      <aside id="hud">
+        <h1>Urban Empire VR</h1>
 
-function updateUI() {
-  ui.money.textContent = `$${state.money.toLocaleString()}`;
-  ui.reputation.textContent = `${state.reputation.toFixed(0)}%`;
-  ui.staff.textContent = `${state.staff}`;
-  ui.price.textContent = `$${state.price}`;
-  ui.quality.textContent = `${state.quality.toFixed(0)}%`;
-  ui.inventory.textContent = `${state.inventory}`;
-  ui.demand.textContent = `${state.demand.toFixed(2)}`;
-  ui.sales.textContent = `${state.sales}`;
-  ui.expenses.textContent = `$${state.expenses.toLocaleString()}`;
-  ui.revenue.textContent = `$${state.revenue.toLocaleString()}`;
-  ui.day.textContent = `${state.day}`;
-  ui.profit.textContent = `$${state.totalProfit.toLocaleString()}`;
-}
+        <div class="stat-grid">
+          <div class="stat"><span>Money</span><strong id="money">$0</strong></div>
+          <div class="stat"><span>Cash flow</span><strong id="cashflow">$0</strong></div>
+          <div class="stat"><span>Reputation</span><strong id="reputation">0%</strong></div>
+          <div class="stat"><span>Demand</span><strong id="demand">0.00</strong></div>
+          <div class="stat"><span>Staff</span><strong id="staff">0</strong></div>
+          <div class="stat"><span>Inventory</span><strong id="inventory">0</strong></div>
+          <div class="stat"><span>Price</span><strong id="price">$0</strong></div>
+          <div class="stat"><span>Quality</span><strong id="quality">0%</strong></div>
+          <div class="stat"><span>Sales</span><strong id="sales">0</strong></div>
+          <div class="stat"><span>Expenses</span><strong id="expenses">$0</strong></div>
+          <div class="stat"><span>Loan</span><strong id="loan">$0</strong></div>
+          <div class="stat"><span>Day</span><strong id="day">1</strong></div>
+        </div>
 
-function computeBusinessTick() {
-  const marketBoost = 1 + state.marketTrend;
-  const priceFactor = clamp(1.3 - (state.price / 100), 0.35, 1.3);
-  const serviceFactor = clamp(0.75 + state.staff * 0.15 + state.quality / 120, 0.45, 1.7);
+        <div class="actions">
+          <button data-action="hire-cashier">Hire cashier</button>
+          <button data-action="hire-operator">Hire operator</button>
+          <button data-action="hire-marketer">Hire marketer</button>
+          <button data-action="train">Train staff</button>
+          <button data-action="upgrade">Upgrade shop</button>
+          <button data-action="restock">Restock</button>
+          <button data-action="marketing">Marketing</button>
+          <button data-action="expand">Expand branch</button>
+          <button data-action="loan">Take loan</button>
+          <button data-action="price-up">Price +</button>
+          <button data-action="price-down">Price -</button>
+          <button data-action="simulate">Next day</button>
+          <button id="vr-button">Enter VR</button>
+        </div>
 
-  state.demand = clamp((0.6 + state.reputation / 150 + state.marketTrend) * marketBoost * priceFactor * serviceFactor, 0.2, 1.8);
-  const effectiveSales = Math.max(0, Math.floor(state.demand * (state.customers + state.staff * 12) * (1 + state.upgradeLevel * 0.18)));
-  const soldUnits = clamp(effectiveSales, 0, state.inventory + 20);
+        <div id="status">Business stable. Focus on keeping service quality high and competition in check.</div>
+      </aside>
 
-  const revenue = soldUnits * state.price;
-  const staffCost = state.staff * 210;
-  const utilityCost = 120 + state.upgradeLevel * 45;
-  const maintenance = 45 + state.upgradeLevel * 20;
-  const expenses = staffCost + utilityCost + maintenance;
-  const profit = revenue - expenses;
+      <section id="dashboard">
+        <div class="panel-header">
+          <span>Operations Overview</span>
+          <span id="trend">Growth: Stable</span>
+        </div>
 
-  state.sales = soldUnits;
-  state.inventory = Math.max(0, state.inventory - soldUnits + Math.round(state.staff * 0.8));
-  state.money += profit;
-  state.reputation = clamp(state.reputation + (profit > 0 ? 0.9 : -1.2) + state.quality / 100 - state.price / 220, 0, 100);
-  state.quality = clamp(state.quality + (state.upgradeLevel > 1 ? 0.6 : 0), 30, 100);
-  state.revenue = revenue;
-  state.expenses = expenses;
-  state.totalProfit += profit;
-  state.day += 1;
+        <div class="kpi-row">
+          <div class="kpi-card accent-blue"><label>Revenue</label><strong id="revenue">$0</strong></div>
+          <div class="kpi-card accent-green"><label>Net Profit</label><strong id="profit">$0</strong></div>
+          <div class="kpi-card accent-gold"><label>Brand Score</label><strong id="brand">0</strong></div>
+          <div class="kpi-card accent-red"><label>Morale</label><strong id="morale">0%</strong></div>
+        </div>
 
-  if (state.money < 0) {
-    ui.status.textContent = 'Business alert: Cash flow negative. Consider cutting costs or increasing sales.';
-  } else if (state.reputation > 80) {
-    ui.status.textContent = 'Strong brand momentum. Demand is growing.';
-  } else if (state.inventory < 6) {
-    ui.status.textContent = 'Inventory is low. Stock up to avoid missed sales.';
-  } else {
-    ui.status.textContent = 'Business stable. Keep growing.';
-  }
+        <div class="mini-grid">
+          <div class="mini-card"><span>Branches</span><strong id="branches">1</strong></div>
+          <div class="mini-card"><span>Competitor</span><strong id="competitor">$0</strong></div>
+          <div class="mini-card"><span>Supplier</span><strong id="supplier">Stable</strong></div>
+          <div class="mini-card"><span>Workers</span><strong id="workers">0</strong></div>
+        </div>
 
-  updateUI();
-}
+        <div class="chart-panel">
+          <div class="chart-header"><span>Performance</span></div>
+          <div class="chart" id="chart"></div>
+        </div>
 
-function hireStaff() {
-  if (state.money < 650) {
-    ui.status.textContent = 'Not enough cash to hire more staff.';
-    return;
-  }
+        <div class="event-panel">
+          <h2>Market report</h2>
+          <ul id="events"></ul>
+        </div>
+      </section>
+    </div>
 
-  state.money -= 650;
-  state.staff += 1;
-  updateUI();
-}
+    <script>
+      const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-function buyUpgrade() {
-  const cost = 1400 + state.upgradeLevel * 650;
-  if (state.money < cost) {
-    ui.status.textContent = 'Upgrade requires more capital.';
-    return;
-  }
+      const state = {
+        money: 18000,
+        loan: 0,
+        reputation: 58,
+        demand: 0.72,
+        staff: {
+          cashier: 1,
+          operator: 1,
+          marketer: 0,
+          manager: 1
+        },
+        inventory: 42,
+        price: 26,
+        quality: 64,
+        sales: 0,
+        revenue: 0,
+        expenses: 0,
+        cashflow: 0,
+        day: 1,
+        upgradeLevel: 1,
+        marketing: 0,
+        morale: 72,
+        marketTrend: 0.02,
+        branchCount: 1,
+        competitorPrice: 28,
+        competitorStrength: 62,
+        supplierState: 'Stable',
+        performance: [4200, 4800, 5400, 6300, 7100, 7800],
+        log: [
+          'Market entry successful. Foot traffic is healthy.',
+          'Brand recognition is slowly growing in the district.'
+        ]
+      };
 
-  state.money -= cost;
-  state.upgradeLevel += 1;
-  state.quality = clamp(state.quality + 8, 0, 100);
-  updateUI();
-}
+      const ui = {
+        money: document.getElementById('money'),
+        cashflow: document.getElementById('cashflow'),
+        reputation: document.getElementById('reputation'),
+        demand: document.getElementById('demand'),
+        staff: document.getElementById('staff'),
+        inventory: document.getElementById('inventory'),
+        price: document.getElementById('price'),
+        quality: document.getElementById('quality'),
+        sales: document.getElementById('sales'),
+        expenses: document.getElementById('expenses'),
+        loan: document.getElementById('loan'),
+        day: document.getElementById('day'),
+        revenue: document.getElementById('revenue'),
+        profit: document.getElementById('profit'),
+        brand: document.getElementById('brand'),
+        morale: document.getElementById('morale'),
+        trend: document.getElementById('trend'),
+        status: document.getElementById('status'),
+        events: document.getElementById('events'),
+        chart: document.getElementById('chart'),
+        branches: document.getElementById('branches'),
+        competitor: document.getElementById('competitor'),
+        supplier: document.getElementById('supplier'),
+        workers: document.getElementById('workers')
+      };
 
-function restockInventory() {
-  const cost = 200 + state.inventory * 12;
-  if (state.money < cost) {
-    ui.status.textContent = 'Not enough cash to restock.';
-    return;
-  }
+      function formatMoney(value) {
+        return `$${Math.round(value).toLocaleString()}`;
+      }
 
-  state.money -= cost;
-  state.inventory += 18;
-  updateUI();
-}
+      function addEvent(message) {
+        state.log.unshift(message);
+        if (state.log.length > 5) state.log.pop();
+      }
 
-function increasePrice() {
-  state.price += 5;
-  updateUI();
-}
+      function renderEventLog() {
+        ui.events.innerHTML = '';
+        state.log.slice(0, 5).forEach((message) => {
+          const item = document.createElement('li');
+          item.textContent = message;
+          ui.events.appendChild(item);
+        });
+      }
 
-function lowerPrice() {
-  state.price = Math.max(10, state.price - 5);
-  updateUI();
-}
+      function renderChart() {
+        const points = state.performance.slice(-12);
+        const max = Math.max(...points, 1);
+        ui.chart.innerHTML = '';
 
-function bindActions() {
-  document.getElementById('hire').addEventListener('click', hireStaff);
-  document.getElementById('upgrade').addEventListener('click', buyUpgrade);
-  document.getElementById('restock').addEventListener('click', restockInventory);
-  document.getElementById('raise-price').addEventListener('click', increasePrice);
-  document.getElementById('lower-price').addEventListener('click', lowerPrice);
-  document.getElementById('simulate').addEventListener('click', computeBusinessTick);
-  ui.vrButton.addEventListener('click', startVR);
-}
+        points.forEach((value) => {
+          const bar = document.createElement('div');
+          bar.className = 'bar';
+          bar.style.height = `${Math.max(12, (value / max) * 100)}%`;
+          bar.title = `${value}`;
+          ui.chart.appendChild(bar);
+        });
+      }
 
-function initScene() {
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#dfe8f7');
+      function totalWorkers() {
+        return Object.values(state.staff).reduce((sum, value) => sum + value, 0);
+      }
 
-  const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 4, 12);
+      function updateUI() {
+        ui.money.textContent = formatMoney(state.money);
+        ui.cashflow.textContent = formatMoney(state.cashflow);
+        ui.reputation.textContent = `${Math.round(state.reputation)}%`;
+        ui.demand.textContent = state.demand.toFixed(2);
+        ui.staff.textContent = totalWorkers();
+        ui.inventory.textContent = state.inventory;
+        ui.price.textContent = formatMoney(state.price);
+        ui.quality.textContent = `${Math.round(state.quality)}%`;
+        ui.sales.textContent = state.sales;
+        ui.expenses.textContent = formatMoney(state.expenses);
+        ui.loan.textContent = formatMoney(state.loan);
+        ui.day.textContent = state.day;
+        ui.revenue.textContent = formatMoney(state.revenue);
+        ui.profit.textContent = formatMoney(state.cashflow);
+        ui.brand.textContent = Math.round(state.reputation + state.quality / 2);
+        ui.morale.textContent = `${Math.round(state.morale)}%`;
+        ui.branches.textContent = state.branchCount;
+        ui.competitor.textContent = formatMoney(state.competitorPrice);
+        ui.supplier.textContent = state.supplierState;
+        ui.workers.textContent = totalWorkers();
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.xr.enabled = true;
-  renderer.setPixelRatio(window.devicePixelRatio);
-  document.getElementById('scene-root').appendChild(renderer.domElement);
+        if (state.cashflow >= 1500) {
+          ui.trend.textContent = 'Growth: Strong';
+        } else if (state.cashflow >= 0) {
+          ui.trend.textContent = 'Growth: Stable';
+        } else {
+          ui.trend.textContent = 'Growth: Shrinking';
+        }
 
-  const ambient = new THREE.AmbientLight(0xffffff, 1.0);
-  scene.add(ambient);
+        if (state.money < 0) {
+          ui.status.textContent = 'Emergency: cash reserves are depleted. Consider a loan or cost reductions.';
+        } else if (state.reputation > 80) {
+          ui.status.textContent = 'Excellent brand momentum. Customers are returning and recommending your business.';
+        } else if (state.inventory < 12) {
+          ui.status.textContent = 'Inventory is low. Replenish stock before the next demand spike.';
+        } else {
+          ui.status.textContent = 'The operation is stable. Keep investing in service quality and expansion.';
+        }
 
-  const directional = new THREE.DirectionalLight(0xffffff, 1.1);
-  directional.position.set(4, 8, 5);
-  scene.add(directional);
+        renderChart();
+        renderEventLog();
+      }
 
-  const ground = new THREE.Mesh(
-    new THREE.CylinderGeometry(9, 9, 0.5, 40),
-    new THREE.MeshStandardMaterial({ color: '#a4d98c' })
-  );
-  ground.position.y = -0.35;
-  scene.add(ground);
+      function randomMarketEvent() {
+        const events = [
+          'Holiday demand surged and customer traffic jumped.',
+          'A supplier raised raw material costs for the week.',
+          'A local digital ad campaign increased walk-ins.',
+          'A direct competitor launched a discount campaign.',
+          'A short outage slowed operations for one day.',
+          'Customer reviews improved after a service upgrade.',
+          'Demand softened because of a local slowdown.'
+        ];
 
-  const store = new THREE.Mesh(
-    new THREE.BoxGeometry(5.5, 3.2, 4.5),
-    new THREE.MeshStandardMaterial({ color: '#d9e1eb' })
-  );
-  store.position.set(0, 1.6, 0);
-  scene.add(store);
+        addEvent(events[Math.floor(Math.random() * events.length)]);
+      }
 
-  const roof = new THREE.Mesh(
-    new THREE.BoxGeometry(5.9, 0.25, 4.9),
-    new THREE.MeshStandardMaterial({ color: '#c7d2df' })
-  );
-  roof.position.set(0, 3.35, 0);
-  scene.add(roof);
+      function hireEmployee(role) {
+        const roster = {
+          'hire-cashier': { role: 'cashier', cost: 850 },
+          'hire-operator': { role: 'operator', cost: 900 },
+          'hire-marketer': { role: 'marketer', cost: 1100 }
+        };
 
-  const desk = new THREE.Mesh(
-    new THREE.BoxGeometry(1.8, 0.8, 1.0),
-    new THREE.MeshStandardMaterial({ color: '#8c5e3c' })
-  );
-  desk.position.set(0, 0.75, 1.2);
-  scene.add(desk);
+        const choice = roster[role];
+        if (!choice) return;
 
-  const sign = new THREE.Mesh(
-    new THREE.BoxGeometry(2.8, 0.8, 0.2),
-    new THREE.MeshStandardMaterial({ color: '#ffdf70' })
-  );
-  sign.position.set(0, 3.5, 2.5);
-  scene.add(sign);
+        if (state.money < choice.cost) {
+          addEvent(`${choice.role[0].toUpperCase() + choice.role.slice(1)} hiring failed: not enough cash.`);
+          updateUI();
+          return;
+        }
 
-  world.store = store;
-  world.desk = desk;
-  world.screen = sign;
+        state.money -= choice.cost;
+        state.staff[choice.role] += 1;
+        state.morale = clamp(state.morale + 3, 0, 100);
+        addEvent(`${choice.role[0].toUpperCase() + choice.role.slice(1)} hired successfully.`);
+        updateUI();
+      }
 
-  const customerGroup = new THREE.Group();
-  scene.add(customerGroup);
+      function trainStaff() {
+        const cost = 700 + state.upgradeLevel * 120;
+        if (state.money < cost) {
+          addEvent('Training program delayed: insufficient capital.');
+          updateUI();
+          return;
+        }
 
-  for (let i = 0; i < 12; i++) {
-    const person = new THREE.Mesh(
-      new THREE.SphereGeometry(0.28, 12, 12),
-      new THREE.MeshStandardMaterial({ color: ['#4f8ef7', '#f47a60', '#a9d18e', '#e3a2ff'][i % 4] })
-    );
-    const x = (i % 4) * 1.8 - 2.6;
-    const z = Math.floor(i / 4) * 1.8 - 1.2;
-    person.position.set(x, 0.5, z + 2.2);
-    person.userData = { bob: Math.random() * Math.PI * 2 };
-    customerGroup.add(person);
-    world.customers.push(person);
-  }
+        state.money -= cost;
+        state.quality = clamp(state.quality + 7, 0, 100);
+        state.morale = clamp(state.morale + 6, 0, 100);
+        addEvent('Staff training improved service quality and consistency.');
+        updateUI();
+      }
 
-  function animate() {
-    const t = performance.now() * 0.002;
-    world.customers.forEach((person, idx) => {
-      person.position.y = 0.5 + Math.sin(t + idx + person.userData.bob) * 0.12;
-      person.rotation.y += 0.01;
-    });
+      function buyUpgrade() {
+        const cost = 2600 + state.upgradeLevel * 1600;
+        if (state.money < cost) {
+          addEvent('Upgrade delayed: capital is not available yet.');
+          updateUI();
+          return;
+        }
 
-    world.store.rotation.y = Math.sin(t * 0.45) * 0.04;
-    world.desk.rotation.y = Math.sin(t * 0.7) * 0.08;
-    renderer.render(scene, camera);
-  }
+        state.money -= cost;
+        state.upgradeLevel += 1;
+        state.quality = clamp(state.quality + 10, 0, 100);
+        state.morale = clamp(state.morale + 3, 0, 100);
+        addEvent('Store upgrade completed. Service quality and efficiency improved.');
+        updateUI();
+      }
 
-  renderer.setAnimationLoop(animate);
+      function restockInventory() {
+        const cost = 260 + Math.max(0, 20 - state.inventory) * 12;
+        if (state.money < cost) {
+          addEvent('Restock canceled: insufficient working capital.');
+          updateUI();
+          return;
+        }
 
-  const onResize = () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  };
-  window.addEventListener('resize', onResize);
-}
+        state.money -= cost;
+        state.inventory += 20;
+        addEvent('Inventory restocked for the next customer cycle.');
+        updateUI();
+      }
 
-async function startVR() {
-  if (!navigator.xr) {
-    ui.status.textContent = 'WebXR is not supported in this browser.';
-    return;
-  }
+      function marketingPush() {
+        const cost = 600 + state.marketing * 0.65;
+        if (state.money < cost) {
+          addEvent('Marketing budget too low to run the campaign.');
+          updateUI();
+          return;
+        }
 
-  try {
-    const session = await navigator.xr.requestSession('immersive-vr', {
-      requiredFeatures: ['local-floor'],
-      optionalFeatures: ['hand-tracking']
-    });
-    const gl = document.querySelector('canvas').getContext('webgl', { xrCompatible: true });
-    if (!gl) {
-      throw new Error('WebGL XR context unavailable');
-    }
-    ui.status.textContent = 'VR session started.';
-    console.log('VR session', session);
-  } catch (error) {
-    ui.status.textContent = 'Could not start VR. Try a supported browser or device.';
-    console.warn(error);
-  }
-}
+        state.money -= cost;
+        state.marketing += 600;
+        state.reputation = clamp(state.reputation + 4, 0, 100);
+        addEvent('Local ad campaign boosted awareness and walk-in traffic.');
+        updateUI();
+      }
 
-bindActions();
-updateUI();
-initScene();
+      function expandBranch() {
+        const cost = 7000 + state.branchCount * 2800;
+        if (state.money < cost) {
+          addEvent('Branch expansion failed: more capital is needed.');
+          updateUI();
+          return;
+        }
+
+        state.money -= cost;
+        state.branchCount += 1;
+        state.morale = clamp(state.morale + 2, 0, 100);
+        addEvent('A new branch opened and expanded your local reach.');
+        updateUI();
+      }
+
+      function takeLoan() {
+        const amount = 5000;
+        state.money += amount;
+        state.loan += amount;
+        addEvent('Bank financing secured to accelerate expansion.');
+        updateUI();
+      }
+
+      function adjustPrice(delta) {
+        state.price = clamp(state.price + delta, 12, 80);
+        addEvent(delta > 0 ? 'Price increased to improve margins.' : 'Price lowered to boost conversions.');
+        updateUI();
+      }
+
+      function simulateDay() {
+        const staffPower = 0.7 + state.staff.cashier * 0.08 + state.staff.operator * 0.12 + state.staff.marketer * 0.1 + state.staff.manager * 0.09;
+        const qualityFactor = state.quality / 100;
+        const moraleFactor = state.morale / 100;
+        const upgradeMultiplier = 1 + state.upgradeLevel * 0.22;
+        const marketingFactor = 1 + state.marketing / 2500;
+        const competitorGap = (state.price - state.competitorPrice) / 30;
+        const baseDemand = 0.52 + state.reputation / 120 + state.marketTrend;
+
+        state.demand = clamp(baseDemand * staffPower * qualityFactor * moraleFactor * upgradeMultiplier * marketingFactor * (1.1 - competitorGap * 0.15), 0.2, 2.4);
+
+        const customerBase = 30 + totalWorkers() * 10 + state.branchCount * 14 + state.reputation / 5;
+        const soldUnits = clamp(Math.round(state.demand * customerBase), 0, state.inventory + 48);
+        const revenue = soldUnits * state.price;
+
+        const wages = (state.staff.cashier * 720) + (state.staff.operator * 840) + (state.staff.marketer * 980) + (state.staff.manager * 1200);
+        const utilities = 180 + state.upgradeLevel * 90 + state.branchCount * 160;
+        const rent = 1200 + state.upgradeLevel * 220 + state.branchCount * 380;
+        const maintenance = 240 + state.upgradeLevel * 120;
+        const taxes = revenue * 0.09;
+        const marketingSpend = state.marketing * 0.35;
+
+        state.expenses = wages + utilities + rent + maintenance + taxes + marketingSpend;
+        state.sales = soldUnits;
+        state.revenue = revenue;
+        state.cashflow = revenue - state.expenses;
+
+        state.money += state.cashflow;
+        state.inventory = Math.max(0, state.inventory - soldUnits + (state.staff.operator * 4) + state.branchCount * 3);
+        state.reputation = clamp(state.reputation + (state.cashflow > 0 ? 1.2 : -1.8) + state.quality / 150 - state.price / 160 + state.marketing / 8000, 0, 100);
+        state.quality = clamp(state.quality + (state.upgradeLevel > 1 ? 0.9 : 0.2) - (state.inventory < 10 ? 1.4 : 0), 30, 100);
+        state.morale = clamp(state.morale + (state.cashflow > 0 ? 1.5 : -2.3), 25, 100);
+
+        const supplierRoll = Math.random();
+        if (supplierRoll > 0.82) {
+          state.supplierState = 'Delayed';
+          state.inventory = Math.max(0, state.inventory - 6);
+          addEvent('Supplier delay disrupted stock delivery and reduced inventory availability.');
+        } else if (supplierRoll > 0.65) {
+          state.supplierState = 'Stable';
+        } else {
+          state.supplierState = 'Fast';
+          state.inventory += 6;
+          addEvent('Supplier delivery was fast and improved product availability.');
+        }
+
+        state.competitorPrice = clamp(state.competitorPrice + (Math.random() - 0.5) * 6, 16, 48);
+        state.competitorStrength = clamp(state.competitorStrength + (Math.random() - 0.5) * 16, 30, 95);
+
+        if (Math.random() > 0.72) {
+          randomMarketEvent();
+        }
+
+        state.performance.push(state.cashflow + 4200);
+        if (state.performance.length > 12) state.performance.shift();
+
+        state.day += 1;
+        state.marketTrend = clamp(state.marketTrend + (Math.random() - 0.5) * 0.06, -0.15, 0.25);
+        updateUI();
+      }
+
+      function bindActions() {
+        document.querySelectorAll('[data-action]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const action = button.dataset.action;
+            if (action === 'hire-cashier') hireEmployee(action);
+            if (action === 'hire-operator') hireEmployee(action);
+            if (action === 'hire-marketer') hireEmployee(action);
+            if (action === 'train') trainStaff();
+            if (action === 'upgrade') buyUpgrade();
+            if (action === 'restock') restockInventory();
+            if (action === 'marketing') marketingPush();
+            if (action === 'expand') expandBranch();
+            if (action === 'loan') takeLoan();
+            if (action === 'price-up') adjustPrice(2);
+            if (action === 'price-down') adjustPrice(-2);
+            if (action === 'simulate') simulateDay();
+          });
+        });
+
+        document.getElementById('vr-button').addEventListener('click', startVR);
+      }
+
+      function buildCustomers() {
+        const customerZone = document.getElementById('customers');
+        for (let i = 0; i < 14; i++) {
+          const person = document.createElement('div');
+          person.className = 'person';
+          person.style.left = `${Math.random() * 80 + 8}%`;
+          person.style.bottom = `${Math.random() * 16 + 8}%`;
+          person.style.background = ['#66c7ff', '#ffb26b', '#8ce39f', '#d6a3ff'][i % 4];
+          customerZone.appendChild(person);
+        }
+      }
+
+      function animateCustomers() {
+        const people = document.querySelectorAll('.person');
+        people.forEach((person, index) => {
+          const baseX = 8 + (index % 7) * 12 + (index % 2) * 4;
+          const baseY = 8 + Math.floor(index / 7) * 18;
+          const t = performance.now() * 0.001 + index;
+          person.style.left = `${baseX + Math.sin(t * 0.8) * 8}%`;
+          person.style.bottom = `${baseY + Math.cos(t * 0.7) * 5}%`;
+          person.style.transform = `scale(${1 + Math.sin(t) * 0.12})`;
+        });
+        requestAnimationFrame(animateCustomers);
+      }
+
+      async function startVR() {
+        if (!navigator.xr) {
+          addEvent('WebXR unavailable in this browser.');
+          ui.status.textContent = 'This browser does not support immersive VR mode.';
+          updateUI();
+          return;
+        }
+
+        try {
+          const display = await navigator.xr.requestSession('immersive-vr', {
+            requiredFeatures: ['local-floor'],
+            optionalFeatures: ['hand-tracking']
+          });
+
+          ui.status.textContent = 'VR session started successfully. The business world is now fully immersive.';
+          console.log('XR session started', display);
+        } catch (error) {
+          ui.status.textContent = 'VR activation was canceled or unsupported on this device.';
+          console.warn(error);
+        }
+      }
+
+      bindActions();
+      buildCustomers();
+      animateCustomers();
+      updateUI();
+    </script>
+  </body>
+</html>
