@@ -4,13 +4,14 @@ This repository contains an advanced browser-based WebXR tycoon prototype and a 
 
 ## Included systems
 
-- Realistic business simulation engine
-- Daily operational cycle with revenue, taxes, wages, inventory, and upkeep
-- Brand reputation and morale management
-- Market trend and random event modelling
-- Upgrade paths, hiring, pricing, marketing, and loan decisions
-- Performance dashboard with trend charts
+- realistic business simulation engine
+- daily operational cycle with revenue, taxes, wages, inventory, and upkeep
+- brand reputation and morale management
+- market trend and random event modelling
+- upgrade paths, hiring, pricing, marketing, and loan decisions
+- performance dashboard with trend charts
 - WebXR activation button for compatible headsets and browsers
+- branch expansion and competitor pricing pressure
 
 ## WebXR prototype
 
